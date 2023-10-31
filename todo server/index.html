@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO APP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 20px 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #todosContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .todoBox {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 10px;
+            width: 300px;
+            text-align: left;
+        }
+
+        .todoBox h2 {
+            color: #007BFF;
+        }
+
+        button.deleteButton {
+            background-color: #ff6666;
+        }
+
+        #json-data {
+            margin: 20px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>TODO APP</h1>
+    <div class="container">
+        <div>
+            <label for="title">Todo title</label>
+            <input type="text" id="title">
+        </div>
+        <div>
+            <label for="desc">Todo description</label>
+            <input type="text" id="desc">
+        </div>
+        <button onclick="onPress()">Add Todo</button>
+        <button onclick="getTodos()">Get Todos</button>
+    </div>
+    <div id="todosContainer"></div>
+    <pre id="json-data"></pre>
+</body>
+<script>
+    
+    function getTodos(){
+        fetch("http://localhost:3000/todos", {
+            method: "GET"
+        }).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            console.log(data);
+            const todosContainer = document.getElementById("todosContainer");
+            todosContainer.innerHTML = "";
+
+            data.forEach(function(todo) {
+                const todoDiv = document.createElement("div");
+                todoDiv.classList.add("todoBox");
+                const todoTitle = document.createElement("h2");
+                todoTitle.innerHTML = todo.title;
+                const todoDesc = document.createElement("p");
+                todoDesc.innerHTML = todo.description;
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "DELETE";
+                deleteButton.addEventListener("click", function() {
+                    deleteTodo(todo.id);
+                });
+
+                todoDiv.appendChild(todoTitle);
+                todoDiv.appendChild(todoDesc);
+                todoDiv.appendChild(deleteButton);
+
+                todosContainer.appendChild(todoDiv);
+            });
+
+            // document.getElementById("json-data").innerHTML = JSON.stringify(data,null,2);
+        });
+    }
+    
+    const deleteTodo = (id) => {
+        fetch(`http://localhost:3000/todos/${id}`, {
+            method: "DELETE",
+        }).then(function(response) {
+            if(response.ok) {
+                console.log("Todo deleted successfully");
+                getTodos();
+            } else {
+                console.log("Failed to delete todo");
+            }
+        });
+    }
+
+    
+    function onPress() {
+        const title = document.getElementById("title").value;
+        const desc = document.getElementById("desc").value;
+        fetch("http://localhost:3000/todos", {
+            method: "POST",
+            body: JSON.stringify({
+                title: title,
+                description: desc
+            }),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(function(resp) {
+            resp.json().then(function(parsedData) {
+                console.log(parsedData);
+            });
+        }).catch(function(error) {
+            console.log(error);
+        });
+        document.getElementById("title").value = "";
+        document.getElementById("desc").value = "";
+    }
+</script>
+</html>
